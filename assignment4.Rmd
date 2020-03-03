@@ -84,12 +84,7 @@ byAge <- Data %>%
   summarise(
     monthly = mean(h_payn_dv, na.rm = TRUE)
   )
-byAge %>%
-        ggplot(aes(x = h_age_dv, y = monthly)) +
-        geom_smooth() +
-        xlim(10,60) +
-        xlab("Age") +
-        ylab("Monthly Earnings")
+
 
 # splitting up sex
 
@@ -98,19 +93,19 @@ byAgeSex <- Data %>%
   group_by(h_age_dv, sex_dv) %>%
   summarise(
 monthly = mean(h_payn_dv, na.rm = TRUE)
-  )
-
-byAgeSex %>%
-    ggplot(aes(x = h_age_dv, y = monthly, colour = sex_dv)) +
+  ) %>%
+    ggplot(aes(x = h_age_dv, y = monthly, fill = sex_dv)) +
     geom_smooth() +
     xlim(15,65) +
     ylim(0,2500) +
-    labs(x = "Age", y = "Monthly earnings", colour = "Sex")
+    labs(x = "Age", y = "Monthly earnings", fill = "Sex")
+
+byAgeSex
 
 # I struggled to change the colour and pattern of the lines.
 
     ```
-This line graph shows us the relationship between the age of a person and their monthly earnings. Both me and women's average monthly wages increase until the age of 45 before they plateau and decrease slightly. However, it remains noticeable that a man's avrage monthly earnings remain significantly higher than that of a woman throughout their lifetime
+This line graph shows us the relationship between the age of a person and their monthly earnings. Both me and women's average monthly wages increase until the age of 45 before they plateau and decrease slightly. However, it remains noticeable that a man's average monthly earnings remain significantly higher than that of a woman throughout their lifetime
 
 3. Faceted bar chart (20 points).
 
@@ -137,40 +132,47 @@ This graph helps to show the distribution of pay between men and women, grouped 
 
     ```{r}
    HeatRegion <- Data %>%
-        select(h_gor_dv, placeBorn, h_age_dv) %>%
+        group_by(h_gor_dv, placeBorn) %>%
+        summarise(meanage = mean(h_age_dv, na.rm = TRUE)) %>%
         filter(!is.na(h_gor_dv)) %>%
         filter(!is.na(placeBorn)) %>%
         
         
-    ggplot(aes(x = h_gor_dv, y = placeBorn, fill = h_age_dv)) +
+    ggplot(aes(x = h_gor_dv, y = placeBorn, fill = meanage)) +
     geom_tile() +
         labs(x = "Region", y = "Country of birth", fill = "Mean age") +
         theme(axis.text.x = element_text(angle = 90)) 
         
     HeatRegion
     
-    # I attempted to use the lims() function to alter the scale of the Mean Age but was unsuccessful
+    
     ```
-This graph is supposed to show the average age of respondents according to where they were born and where they now reside within the UK. However, due to what I believe as problems with the scale means that the values are inaccurate compared to the heat map on the question. Therefore it is difficult to analyse.
+This graph show the average age of respondents according to where they were born and where they now reside within the UK. Therefore we can visualise more particular findings, such as 
 
 5. Population pyramid (20 points).
 
     ```{r}
-    
     PP <- Data %>%
-        select(h_age_dv, sex_dv) %>%
-        filter(!is.na(sex_dv)) %>%
+        group_by(h_age_dv, sex_dv) %>%
+        count(h_age_dv) %>%
+        filter(!is.na(sex_dv)) %>% 
+        filter(!is.na(h_age_dv)) %>%
+        mutate(n = ifelse(sex_dv == "male", -n, n))%>%
+        rename(sex = sex_dv) 
         
-        ggplot(aes(x = h_age_dv, fill = sex_dv)) +
-        geom_bar(subset = "identity") +
+    PP %>%
+        ggplot(aes(x = h_age_dv, y = n, fill = sex)) +
+        geom_bar(data = subset(PP, sex = "Female"), stat = "identity") +
+        geom_bar(data = subset(PP, sex = "Male"), stat = "identity") +
         coord_flip() +
         labs(x = "Age", y = "n", fill = "Sex") +
-        ylim(-400, 500)
+        scale_fill_brewer(palette = "Set1") +
+    theme_bw()
     
-    PP
+    
     
     ```
-    I am struggling to reflect the graph onto the opposite axis.
+    This graph shows the age distribution of respondents according to sex. There is a spike around 40 - 50 years of age showing that it is one of the most common age range in the survey. Up until 50, the respondents shows a steasding increase as the age increases.  After 50 the number of respondents begins to decrease rather sharply.
     
     
     
