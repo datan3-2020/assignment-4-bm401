@@ -1,7 +1,7 @@
 ---
 title: "Statistical assignment 4"
-author: "[add your name here]"
-date: "[add date here]"
+author: "Benjamin Machon 680011539"
+date: "02/03/2020"
 output: github_document
 ---
 
@@ -22,10 +22,10 @@ First we will need to open and recode the data. I supply the code for this; you 
 
     ```{r}
 library(tidyverse)
-Data8 <- read_tsv("...h_indresp.tab")
+Data8 <- read_tsv("/Users/benmachon/Downloads/UKDA-6614-tab/tab/ukhls_w8/h_indresp.tab")
 Data8 <- Data8 %>%
         select(pidp, h_age_dv, h_payn_dv, h_gor_dv)
-Stable <- read_tsv("...xwavedat.tab")
+Stable <- read_tsv("/Users/benmachon/Downloads/UKDA-6614-tab/tab/ukhls_wx/xwavedat.tab")
 Stable <- Stable %>%
         select(pidp, sex_dv, ukborn, plbornc)
 Data <- Data8 %>% left_join(Stable, "pidp")
@@ -67,25 +67,110 @@ Reproduce the following graphs as close as you can. For each graph, write two se
 1. Univariate distribution (20 points).
 
     ```{r}
+    ggplot(data = Data, aes(x = h_payn_dv)) +
+        geom_freqpoly() + 
+        labs(y = "Number of respondents", x = "Net Monthly Pay")
+    
     ```
+This plot shows that just over £1000 is the most common monthly pay for the respondents in the survey. After a small spike at around 5,500 the number of respondents remains at 0.
+
 
 2. Line chart (20 points). The lines show the non-parametric association between age and monthly earnings for men and women.
 
     ```{r}
+# Age for both sexes
+byAge <- Data %>%
+  group_by(h_age_dv) %>%
+  summarise(
+    monthly = mean(h_payn_dv, na.rm = TRUE)
+  )
+byAge %>%
+        ggplot(aes(x = h_age_dv, y = monthly)) +
+        geom_smooth() +
+        xlim(10,60) +
+        xlab("Age") +
+        ylab("Monthly Earnings")
+
+# splitting up sex
+
+byAgeSex <- Data %>%
+  filter(!is.na(sex_dv)) %>%
+  group_by(h_age_dv, sex_dv) %>%
+  summarise(
+monthly = mean(h_payn_dv, na.rm = TRUE)
+  )
+
+byAgeSex %>%
+    ggplot(aes(x = h_age_dv, y = monthly, colour = sex_dv)) +
+    geom_smooth() +
+    xlim(15,65) +
+    ylim(0,2500) +
+    labs(x = "Age", y = "Monthly earnings", colour = "Sex")
+
+# I struggled to change the colour and pattern of the lines.
+
     ```
+This line graph shows us the relationship between the age of a person and their monthly earnings. Both me and women's average monthly wages increase until the age of 45 before they plateau and decrease slightly. However, it remains noticeable that a man's avrage monthly earnings remain significantly higher than that of a woman throughout their lifetime
 
 3. Faceted bar chart (20 points).
 
     ```{r}
+    byNat <- Data %>%
+  group_by(placeBorn, sex_dv) %>%
+  summarise(
+    monthly = median(h_payn_dv, na.rm = TRUE)
+  ) %>%
+        filter(!is.na(sex_dv)) %>%
+    filter(!is.na(placeBorn)) %>%
+    
+  ggplot(aes(x = sex_dv, y = monthly)) +
+  geom_bar(stat = "identity") +
+        labs(x = "Sex", y = "Median monthly net pay") +
+facet_wrap(~ placeBorn)
+    
+    byNat
     ```
+This graph helps to show the distribution of pay between men and women, grouped by the country in which they were born. In every case, men earn more than women on (median) average per month
+
 
 4. Heat map (20 points).
 
     ```{r}
+   HeatRegion <- Data %>%
+        select(h_gor_dv, placeBorn, h_age_dv) %>%
+        filter(!is.na(h_gor_dv)) %>%
+        filter(!is.na(placeBorn)) %>%
+        
+        
+    ggplot(aes(x = h_gor_dv, y = placeBorn, fill = h_age_dv)) +
+    geom_tile() +
+        labs(x = "Region", y = "Country of birth", fill = "Mean age") +
+        theme(axis.text.x = element_text(angle = 90)) 
+        
+    HeatRegion
     
+    # I attempted to use the lims() function to alter the scale of the Mean Age but was unsuccessful
     ```
+This graph is supposed to show the average age of respondents according to where they were born and where they now reside within the UK. However, due to what I believe as problems with the scale means that the values are inaccurate compared to the heat map on the question. Therefore it is difficult to analyse.
 
 5. Population pyramid (20 points).
 
     ```{r}
+    
+    PP <- Data %>%
+        select(h_age_dv, sex_dv) %>%
+        filter(!is.na(sex_dv)) %>%
+        
+        ggplot(aes(x = h_age_dv, fill = sex_dv)) +
+        geom_bar(subset = "identity") +
+        coord_flip() +
+        labs(x = "Age", y = "n", fill = "Sex") +
+        ylim(-400, 500)
+    
+    PP
+    
     ```
+    I am struggling to reflect the graph onto the opposite axis.
+    
+    
+    
